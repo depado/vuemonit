@@ -19,8 +19,6 @@ steps:
     path: /go
   commands:
   - make test
-  depends_on:
-  - build
 
 - name: linter
   image: golang:latest
@@ -30,8 +28,6 @@ steps:
   commands:
   - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.27.0
   - ./bin/golangci-lint run
-  depends_on:
-  - build
 
 volumes:
 - name: deps

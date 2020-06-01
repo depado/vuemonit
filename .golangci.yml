@@ -1,0 +1,3 @@
+run:
+  deadline: 2m
+  tests: false
