@@ -5,3 +5,5 @@
 vendor/
 vuemonit
 coverage.txt
+conf*.yml
+*.db

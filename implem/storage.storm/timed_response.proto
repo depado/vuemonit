@@ -1,0 +1,12 @@
+syntax="proto3";
+
+package storage;
+option go_package = "implem/storage.storm;storage";
+
+import "google/protobuf/duration.proto";
+
+message TimedResponse {
+    int32 status = 1;
+    google.protobuf.Duration server = 2;
+    google.protobuf.Duration total = 3;
+}

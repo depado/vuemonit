@@ -9,7 +9,8 @@ import (
 // AddLoggerFlags adds support to configure the level of the logger.
 func AddLoggerFlags(c *cobra.Command) {
 	c.PersistentFlags().String("log.level", "info", "one of debug, info, warn, error or fatal")
-	c.PersistentFlags().String("log.preset", "development", `one of "development" or "production"`)
+	c.PersistentFlags().String("log.type", "console", `one of "console" or "json"`)
+	c.PersistentFlags().Bool("log.caller", true, "display the file and line where the call was made")
 }
 
 // AddServerFlags adds support to configure the server.
@@ -27,6 +28,18 @@ func AddServerFlags(c *cobra.Command) {
 	c.PersistentFlags().StringSlice("server.cors.expose", []string{}, "array of exposed headers")
 	c.PersistentFlags().StringSlice("server.cors.origins", []string{}, "array of allowed origins (overwritten if all is active)")
 	c.PersistentFlags().Bool("server.cors.all", false, "defines that all origins are allowed")
+
+	// JWT related flags
+	c.PersistentFlags().String("server.jwt.secret", "", "secret to generate JWT token")
+}
+
+func AddFrontFlags(c *cobra.Command) {
+	c.PersistentFlags().Bool("front.serve", true, "let the server serve the frontend")
+	c.PersistentFlags().String("front.path", "front/dist", "path to the frontend build")
+}
+
+func AddDatabaseFlags(c *cobra.Command) {
+	c.PersistentFlags().String("database.path", "monit.db", "path to the database file to use")
 }
 
 // AddPrometheusFlags adds flags to support prometheus instrumentation.
@@ -48,6 +61,8 @@ func AddAllFlags(c *cobra.Command) {
 	AddLoggerFlags(c)
 	AddPrometheusFlags(c)
 	AddServerFlags(c)
+	AddFrontFlags(c)
+	AddDatabaseFlags(c)
 
 	if err := viper.BindPFlags(c.PersistentFlags()); err != nil {
 		logrus.WithError(err).WithField("step", "AddAllFlags").Fatal("Couldn't bind flags")

@@ -8,7 +8,12 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/Depado/vuemonit/cmd"
+	"github.com/Depado/vuemonit/implem/auth.jwt"
+	"github.com/Depado/vuemonit/implem/formatter.json"
+	"github.com/Depado/vuemonit/implem/scheduler.gocron"
+	"github.com/Depado/vuemonit/implem/storage.storm"
 	"github.com/Depado/vuemonit/infra"
+	"github.com/Depado/vuemonit/interactor"
 	"github.com/Depado/vuemonit/router"
 )
 
@@ -35,11 +40,18 @@ var versionCmd = &cobra.Command{
 
 func run() {
 	fx.New(
-		fx.Provide(cmd.NewConf),
-		fx.Provide(cmd.NewLogger),
-		fx.Provide(infra.NewCORS),
-		fx.Provide(infra.NewServer),
-		fx.Provide(router.NewRouter),
+		fx.Provide(
+			cmd.NewConf,
+			cmd.NewLogger,
+			infra.NewCORS,
+			infra.NewServer,
+			storage.NewStormStorage,
+			scheduler.NewGocronScheduler,
+			auth.NewJWTAuthProvider,
+			formatter.NewJSONFormatter,
+			interactor.NewInteractor,
+			router.NewRouter,
+		),
 		fx.Invoke(router.Run),
 	).Run()
 }

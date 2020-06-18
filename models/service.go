@@ -5,65 +5,104 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
 	"time"
+
+	"github.com/rs/xid"
 )
 
-type Services []*Service
-
-type ResponseInfo struct {
+type HealthCheck struct {
+	u              *url.URL
+	At             time.Time     `json:"at"`
+	URL            string        `json:"url"`
+	Every          time.Duration `json:"every"`
 	DNS            time.Duration `json:"dns"`
-	Handshake      time.Duration `json:"tls_handshake"`
+	Handshake      time.Duration `json:"handshake"`
 	Connect        time.Duration `json:"connect"`
 	TotalResponse  time.Duration `json:"total"`
 	ServerResponse time.Duration `json:"server"`
+	Status         int           `json:"status"`
 }
 
 type Service struct {
-	URL      *url.URL     `json:"-"`
-	Status   int          `json:"status"`
-	Response ResponseInfo `json:"response"`
+	ID          string      `json:"id" storm:"id"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	HealthCheck HealthCheck `json:"healthcheck"`
+	UserID      string      `json:"user_id"`
 }
 
-func NewService(u string) (*Service, error) {
-	su, err := url.Parse(u)
+func NewService(user *User, hurl, name, description string, every time.Duration) (*Service, error) {
+	if user.ID == "" {
+		return nil, fmt.Errorf("user has no id")
+	}
+	su, err := url.Parse(hurl)
 	if err != nil {
 		return nil, fmt.Errorf("new service: %w", err)
 	}
 
-	return &Service{URL: su}, nil
+	return &Service{
+		ID:          xid.New().String(),
+		Name:        name,
+		Description: description,
+		HealthCheck: HealthCheck{
+			u:     su,
+			URL:   su.String(),
+			Every: every,
+		},
+		UserID: user.ID,
+	}, nil
 }
 
-func (s *Service) Fetch() error {
-	var start, connect, dns, tlsHandshake time.Time
+func (s *Service) Fetch() (*TimedResponse, error) {
+	var start, c, d, t time.Time
+	var co, dns, handshake bool
 
-	req, err := http.NewRequest("GET", s.URL.String(), nil)
+	req, err := http.NewRequest("GET", s.HealthCheck.u.String(), nil)
 	if err != nil {
-		return fmt.Errorf("fetch service: %w", err)
+		return nil, fmt.Errorf("fetch service: %w", err)
 	}
 
 	trace := &httptrace.ClientTrace{
-		DNSStart: func(dsi httptrace.DNSStartInfo) { dns = time.Now() },
+		DNSStart: func(dsi httptrace.DNSStartInfo) { d = time.Now() },
 		DNSDone: func(ddi httptrace.DNSDoneInfo) {
-			s.Response.DNS = time.Since(dns)
+			dns = true
+			s.HealthCheck.DNS = time.Since(d)
 		},
 
-		TLSHandshakeStart: func() { tlsHandshake = time.Now() },
+		TLSHandshakeStart: func() { t = time.Now() },
 		TLSHandshakeDone: func(cs tls.ConnectionState, err error) {
-			s.Response.Handshake = time.Since(tlsHandshake)
+			handshake = true
+			s.HealthCheck.Handshake = time.Since(t)
 		},
 
-		ConnectStart: func(network, addr string) { connect = time.Now() },
+		ConnectStart: func(network, addr string) { c = time.Now() },
 		ConnectDone: func(network, addr string, err error) {
-			s.Response.Connect = time.Since(connect)
+			co = true
+			s.HealthCheck.Connect = time.Since(c)
 		},
 
 		GotFirstResponseByte: func() {
-			s.Response.TotalResponse = time.Since(start)
-			s.Response.ServerResponse = s.Response.TotalResponse - s.Response.DNS - s.Response.Handshake - s.Response.Connect
+			took := time.Since(start)
+			s.HealthCheck.ServerResponse = took
+			s.HealthCheck.TotalResponse = took
+			if dns {
+				s.HealthCheck.ServerResponse -= s.HealthCheck.DNS
+			} else {
+				s.HealthCheck.TotalResponse += s.HealthCheck.DNS
+			}
+			if handshake {
+				s.HealthCheck.ServerResponse -= s.HealthCheck.Handshake
+			} else {
+				s.HealthCheck.TotalResponse += s.HealthCheck.Handshake
+			}
+			if co {
+				s.HealthCheck.ServerResponse -= s.HealthCheck.Connect
+			} else {
+				s.HealthCheck.TotalResponse += s.HealthCheck.Connect
+			}
 		},
 	}
 
@@ -72,12 +111,17 @@ func (s *Service) Fetch() error {
 
 	resp, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
-		log.Fatal(err)
+		defer resp.Body.Close()
+		return nil, fmt.Errorf("unable to roundtrip for service %v: %w", s.Name, err)
 	}
-
 	io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
-	defer resp.Body.Close()
-	s.Status = resp.StatusCode
-
-	return nil
+	s.HealthCheck.Status = resp.StatusCode
+	s.HealthCheck.At = time.Now()
+	return &TimedResponse{
+		ID:        xid.New(),
+		Server:    s.HealthCheck.ServerResponse,
+		Total:     s.HealthCheck.TotalResponse,
+		Status:    s.HealthCheck.Status,
+		ServiceID: s.ID,
+	}, nil
 }

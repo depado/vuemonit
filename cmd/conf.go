@@ -2,16 +2,23 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type LogConf struct {
 	Level  string `mapstructure:"level"`
-	Preset string `mapstructure:"preset"`
+	Type   string `mapstructure:"type"`
+	Caller bool   `mapstructure:"caller"`
+}
+
+type JWTConf struct {
+	Secret string `mapstructure:"secret"`
 }
 
 type ServerConf struct {
@@ -20,6 +27,12 @@ type ServerConf struct {
 	Mode string   `mapstructure:"mode"`
 	Log  bool     `mapstructure:"log"`
 	CORS CorsConf `mapstructure:"cors"`
+	JWT  JWTConf  `mapstructure:"jwt"`
+}
+
+type FrontConf struct {
+	Serve bool   `mapstructure:"serve"`
+	Path  string `mapstructure:"path"`
 }
 
 type CorsConf struct {
@@ -36,35 +49,51 @@ type PrometheusConf struct {
 	Disabled bool   `mapstructure:"disabled"`
 }
 
+type DatabaseConf struct {
+	Path string `mapstructure:"path"`
+}
+
 type Conf struct {
 	Log        LogConf        `mapstructure:"log"`
 	Server     ServerConf     `mapstructure:"server"`
+	Front      FrontConf      `mapstructure:"front"`
 	Prometheus PrometheusConf `mapstructure:"prometheus"`
+	Database   DatabaseConf   `mapstructure:"database"`
 }
 
 // NewLogger will return a new logger
-func NewLogger(c *Conf) (*zap.Logger, error) {
-	lvl := zap.NewAtomicLevel()
-	if err := lvl.UnmarshalText([]byte(c.Log.Level)); err != nil {
-		return nil, fmt.Errorf("parse level: %w", err)
+func NewLogger(c *Conf) *zerolog.Logger {
+	// Level parsing
+	warns := []string{}
+	lvl, err := zerolog.ParseLevel(c.Log.Level)
+	if err != nil {
+		warns = append(warns, fmt.Sprintf("unrecognized log level '%s', fallback to 'info'", c.Log.Level))
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	} else {
+		zerolog.SetGlobalLevel(lvl)
 	}
-	switch c.Log.Preset {
-	case "development":
-		config := zap.NewDevelopmentConfig()
-		config.Level = lvl
-		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		logger, err := config.Build()
-		if err != nil {
-			return logger, fmt.Errorf("unable to create dev config: %w", err)
-		}
-		return logger, err
-	case "production":
-		config := zap.NewProductionConfig()
-		config.Level = lvl
-		return config.Build()
+
+	// Type parsing
+	switch c.Log.Type {
+	case "console":
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	case "json":
+		break
 	default:
-		return nil, fmt.Errorf("unrecognized logger preset: %s", c.Log.Preset)
+		warns = append(warns, fmt.Sprintf("unrecognized log type '%s', fallback to 'json'", c.Log.Type))
 	}
+
+	// Caller
+	if c.Log.Caller {
+		log.Logger = log.With().Caller().Logger()
+	}
+
+	// Log messages with the newly created logger
+	for _, w := range warns {
+		log.Warn().Msg(w)
+	}
+
+	return &log.Logger
 }
 
 // NewConf will parse and return the configuration

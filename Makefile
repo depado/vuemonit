@@ -19,6 +19,10 @@ front:
 build: ## Build
 	go build $(LDFLAGS) -o $(BINARY) 
 
+.PHONY: proto
+proto: ## Generate protobuf
+	protoc --go_out=. implem/storage.storm/*.proto
+
 .PHONY: docker
 docker: ## Build the docker image
 	docker build -t $(BINARY):latest -t $(BINARY):$(BUILD) \
