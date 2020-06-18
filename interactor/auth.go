@@ -11,24 +11,24 @@ import (
 
 // Login allows users to login and will return an access token on successful
 // login
-func (i Interactor) Login(email, password string) (string, error) {
+func (i Interactor) Login(email, password string) (string, string, error) {
 	var u *models.User
 	var err error
 
 	if u, err = i.Store.GetUserByEmail(email); err != nil {
-		return "", fmt.Errorf("get user by email: %w", err)
+		return "", "", fmt.Errorf("get user by email: %w", err)
 	}
 
 	if !u.CheckPassword(password) {
-		return "", ErrInvalidCredentials
+		return "", "", ErrInvalidCredentials
 	}
 
 	u.LastLogin = time.Now()
 	if err = i.Store.SaveUser(u); err != nil {
-		return "", fmt.Errorf("save user: %w", err)
+		return "", "", fmt.Errorf("save user: %w", err)
 	}
 
-	return i.Auth.GenerateJWT(u)
+	return i.Auth.GenerateTokenPair(u)
 }
 
 func (i Interactor) Register(email, password string) error {
@@ -63,4 +63,18 @@ func (i Interactor) AuthCheck(r *http.Request) (*models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (i Interactor) Refresh(token string) (string, string, error) {
+	claims, err := i.Auth.Check(token)
+	if err != nil {
+		return "", "", fmt.Errorf("check token: %w", err)
+	}
+
+	user, err := i.Store.GetUserByID(claims.Subject)
+	if err != nil {
+		return "", "", fmt.Errorf("retrieve user by id: %w", err)
+	}
+
+	return i.Auth.GenerateTokenPair(user)
 }

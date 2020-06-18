@@ -46,9 +46,15 @@ func (r Router) SetRoutes() {
 
 	g := r.e.Group("/api/v1")
 	{
+		// Simple health check route
 		g.GET("/health", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+		// Auth related routes
 		g.POST("/register", r.Register)
 		g.POST("/login", r.Login)
+		g.POST("/refresh", r.Refresh)
+
+		// Data related routes
 		g.GET("/me", r.AuthRequired(), r.Me)
 		g.POST("/service", r.AuthRequired(), r.PostService)
 		g.GET("/service/:id", r.AuthRequired(), r.GetService)

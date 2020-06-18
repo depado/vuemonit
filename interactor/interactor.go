@@ -51,7 +51,8 @@ func (i Interactor) NewService(user *models.User, name, description, url string)
 // This interface is the main entrypoint for the router.
 type LogicHandler interface {
 	Register(email, password string) error
-	Login(email, password string) (string, error)
+	Login(email, password string) (string, string, error)
+	Refresh(token string) (string, string, error)
 	AuthCheck(r *http.Request) (*models.User, error)
 	NewService(user *models.User, name, description, url string) (*models.Service, error)
 	FormatSelf(user *models.User) interface{}
@@ -61,7 +62,7 @@ type LogicHandler interface {
 
 // AuthProvider is a simple auth provider interface
 type AuthProvider interface {
-	GenerateJWT(user *models.User) (string, error)
+	GenerateTokenPair(user *models.User) (string, string, error)
 	Check(token string) (jwt.StandardClaims, error)
 	Extract(r *http.Request) (string, error)
 }

@@ -14,7 +14,6 @@ import (
 )
 
 type HealthCheck struct {
-	u              *url.URL
 	At             time.Time     `json:"at"`
 	URL            string        `json:"url"`
 	Every          time.Duration `json:"every"`
@@ -48,7 +47,6 @@ func NewService(user *User, hurl, name, description string, every time.Duration)
 		Name:        name,
 		Description: description,
 		HealthCheck: HealthCheck{
-			u:     su,
 			URL:   su.String(),
 			Every: every,
 		},
@@ -60,7 +58,12 @@ func (s *Service) Fetch() (*TimedResponse, error) {
 	var start, c, d, t time.Time
 	var co, dns, handshake bool
 
-	req, err := http.NewRequest("GET", s.HealthCheck.u.String(), nil)
+	su, err := url.Parse(s.HealthCheck.URL)
+	if err != nil {
+		return nil, fmt.Errorf("parse url: %w", err)
+	}
+
+	req, err := http.NewRequest("GET", su.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("fetch service: %w", err)
 	}

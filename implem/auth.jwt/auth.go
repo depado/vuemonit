@@ -6,10 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+
 	"github.com/Depado/vuemonit/cmd"
 	"github.com/Depado/vuemonit/interactor"
 	"github.com/Depado/vuemonit/models"
-	"github.com/dgrijalva/jwt-go"
 )
 
 type jwtProvider struct {
@@ -21,8 +22,7 @@ func NewJWTAuthProvider(conf *cmd.Conf) interactor.AuthProvider {
 	return &jwtProvider{secret: []byte(conf.Server.JWT.Secret)}
 }
 
-// GenerateJWT will generate a valid JWT based on the user's ID
-func (j jwtProvider) GenerateJWT(user *models.User) (string, error) {
+func (j jwtProvider) GenerateTokenPair(user *models.User) (string, string, error) {
 	// Create the basic claims using the standard claims because we don't need
 	// anything else
 	claims := &jwt.StandardClaims{
@@ -31,9 +31,25 @@ func (j jwtProvider) GenerateJWT(user *models.User) (string, error) {
 		IssuedAt:  time.Now().Unix(),
 		NotBefore: time.Now().Unix(),
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString(j.secret)
+	access, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(j.secret)
+	if err != nil {
+		return "", "", fmt.Errorf("signing access token: %w", err)
+	}
+
+	claims = &jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		Subject:   user.ID,
+		IssuedAt:  time.Now().Unix(),
+		NotBefore: time.Now().Unix(),
+	}
+
+	refresh, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(j.secret)
+	if err != nil {
+		return "", "", fmt.Errorf("signing refresh token: %w", err)
+	}
+
+	return access, refresh, nil
 }
 
 // CheckJWT will check whether or not the JWT is valid and return its claims if
