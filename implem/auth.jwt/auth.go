@@ -2,8 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -13,16 +11,24 @@ import (
 	"github.com/Depado/vuemonit/models"
 )
 
+const cookieName = "tok"
+
 type jwtProvider struct {
 	secret []byte
+	https  bool
+	domain string
 }
 
 // NewJWTAuthProvider will create a new simple JWT authorization provider
 func NewJWTAuthProvider(conf *cmd.Conf) interactor.AuthProvider {
-	return &jwtProvider{secret: []byte(conf.Server.JWT.Secret)}
+	return &jwtProvider{
+		secret: []byte(conf.Server.JWT.Secret),
+		https:  conf.Server.Cookie.HTTPS,
+		domain: conf.Server.Cookie.Domain,
+	}
 }
 
-func (j jwtProvider) GenerateTokenPair(user *models.User) (string, string, error) {
+func (j jwtProvider) GenerateTokenPair(user *models.User) (*models.TokenPair, error) {
 	// Create the basic claims using the standard claims because we don't need
 	// anything else
 	claims := &jwt.StandardClaims{
@@ -34,7 +40,7 @@ func (j jwtProvider) GenerateTokenPair(user *models.User) (string, string, error
 
 	access, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(j.secret)
 	if err != nil {
-		return "", "", fmt.Errorf("signing access token: %w", err)
+		return nil, fmt.Errorf("signing access token: %w", err)
 	}
 
 	claims = &jwt.StandardClaims{
@@ -46,18 +52,18 @@ func (j jwtProvider) GenerateTokenPair(user *models.User) (string, string, error
 
 	refresh, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(j.secret)
 	if err != nil {
-		return "", "", fmt.Errorf("signing refresh token: %w", err)
+		return nil, fmt.Errorf("signing refresh token: %w", err)
 	}
 
-	return access, refresh, nil
+	return &models.TokenPair{Access: access, Refresh: refresh}, nil
 }
 
 // CheckJWT will check whether or not the JWT is valid and return its claims if
 // so
-func (j jwtProvider) Check(token string) (jwt.StandardClaims, error) {
-	claims := jwt.StandardClaims{}
+func (j jwtProvider) CheckToken(token string) (*jwt.StandardClaims, error) {
+	claims := &jwt.StandardClaims{}
 
-	tkn, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (interface{}, error) {
+	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return j.secret, nil
 	})
 	if err != nil {
@@ -68,18 +74,4 @@ func (j jwtProvider) Check(token string) (jwt.StandardClaims, error) {
 	}
 
 	return claims, nil
-}
-
-// Convenience function that extracts the JWT from the incoming request's header
-func (j jwtProvider) Extract(r *http.Request) (string, error) {
-	var raw string
-
-	if h := r.Header.Get("Authorization"); len(h) > 7 && strings.EqualFold(h[0:7], "BEARER ") {
-		raw = h[7:]
-	}
-	if raw == "" {
-		return raw, interactor.ErrBearerTokenNotFound
-	}
-
-	return raw, nil
 }

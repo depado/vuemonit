@@ -17,11 +17,16 @@ func (r Router) AuthRequired() gin.HandlerFunc {
 		var err error
 		var user *models.User
 
-		if user, err = r.lh.AuthCheck(c.Request); err != nil {
+		if user, err = r.lh.AuthCheck(c.Writer, c.Request); err != nil {
+			r.log.Debug().Err(err).Msg("auth check failed")
 			switch {
 			case errors.Is(err, interactor.ErrBearerTokenNotFound):
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 					"error": "missing authorization header or wrong token format",
+				})
+			case errors.Is(err, interactor.ErrCookieFormat) || errors.Is(err, interactor.ErrCookieNotFound):
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "no cookie found or invalid cookie",
 				})
 			case errors.Is(err, interactor.ErrInvalidJWT) || errors.Is(err, interactor.ErrJWT):
 				c.AbortWithStatus(http.StatusUnauthorized)

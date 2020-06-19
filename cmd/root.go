@@ -31,11 +31,14 @@ func AddServerFlags(c *cobra.Command) {
 
 	// JWT related flags
 	c.PersistentFlags().String("server.jwt.secret", "", "secret to generate JWT token")
+	c.PersistentFlags().String("server.cookie.domain", "", "domain on which the cookie might be used")
+	c.PersistentFlags().Bool("server.cookie.https", true, "always send the cookie to https endpoints")
+
 }
 
 func AddFrontFlags(c *cobra.Command) {
 	c.PersistentFlags().Bool("front.serve", true, "let the server serve the frontend")
-	c.PersistentFlags().String("front.path", "front/dist", "path to the frontend build")
+	c.PersistentFlags().String("front.path", "front/dist/spa", "path to the frontend build")
 }
 
 func AddDatabaseFlags(c *cobra.Command) {

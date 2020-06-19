@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -11,6 +13,7 @@ import (
 	"github.com/Depado/vuemonit/implem/auth.jwt"
 	"github.com/Depado/vuemonit/implem/formatter.json"
 	"github.com/Depado/vuemonit/implem/scheduler.gocron"
+	noopsched "github.com/Depado/vuemonit/implem/scheduler.noop"
 	"github.com/Depado/vuemonit/implem/storage.storm"
 	"github.com/Depado/vuemonit/infra"
 	"github.com/Depado/vuemonit/interactor"
@@ -27,7 +30,6 @@ var (
 // command-line
 var rootCmd = &cobra.Command{
 	Use: "vuemonit",
-
 	Run: func(cmd *cobra.Command, args []string) { run() },
 }
 
@@ -38,8 +40,53 @@ var versionCmd = &cobra.Command{
 	Run:   func(cmd *cobra.Command, args []string) { fmt.Printf("Build: %s\nVersion: %s\n", Build, Version) },
 }
 
+var userCmd = &cobra.Command{
+	Use:   "user",
+	Short: "manage users",
+	Run:   func(cmd *cobra.Command, args []string) { fmt.Println("hello") },
+}
+
+var addUser = &cobra.Command{
+	Use:   "add [email] [password]",
+	Short: "add a user",
+	Args:  cobra.MinimumNArgs(2),
+	Run: func(c *cobra.Command, args []string) {
+		type Params struct {
+			Email    string
+			Password string
+		}
+		params := func() *Params {
+			return &Params{Email: args[0], Password: args[1]}
+		}
+		create := func(p *Params, l *zerolog.Logger, i interactor.LogicHandler) {
+			if err := i.Register(p.Email, p.Password); err != nil {
+				l.Err(err).Msg("unable to create new user")
+			} else {
+				l.Info().Str("email", p.Email).Msg("created user")
+			}
+		}
+		app := fx.New(
+			fx.NopLogger,
+			fx.Provide(
+				cmd.NewConf,
+				cmd.NewLogger,
+				storage.NewStormStorage,
+				noopsched.NewNoopScheduler,
+				auth.NewJWTAuthProvider,
+				formatter.NewJSONFormatter,
+				interactor.NewInteractor,
+				params,
+			),
+			fx.Invoke(create),
+		)
+		app.Start(context.Background()) // nolint: errcheck
+		app.Stop(context.Background())  // nolint: errcheck
+	},
+}
+
 func run() {
 	fx.New(
+		fx.NopLogger,
 		fx.Provide(
 			cmd.NewConf,
 			cmd.NewLogger,
@@ -61,6 +108,8 @@ func main() {
 	// cobra.OnInitialize(cmd.Initialize)
 	cmd.AddAllFlags(rootCmd)
 	rootCmd.AddCommand(versionCmd)
+	userCmd.AddCommand(addUser)
+	rootCmd.AddCommand(userCmd)
 
 	// Run the command
 	if err := rootCmd.Execute(); err != nil {

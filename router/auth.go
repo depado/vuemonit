@@ -84,7 +84,7 @@ func (r Router) Login(c *gin.Context) {
 		return
 	}
 
-	at, rt, err := r.lh.Login(cq.Email, cq.Password)
+	tp, cookie, err := r.lh.Login(cq.Email, cq.Password)
 	if err != nil {
 		if errors.Is(err, interactor.ErrInvalidCredentials) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "wrong credentials"})
@@ -94,7 +94,8 @@ func (r Router) Login(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
-	c.JSON(http.StatusOK, TokenResponse{AccessToken: at, RefreshToken: rt})
+	http.SetCookie(c.Writer, cookie)
+	c.JSON(http.StatusOK, tp)
 }
 
 func (r Router) Refresh(c *gin.Context) {
@@ -114,12 +115,12 @@ func (r Router) Refresh(c *gin.Context) {
 		return
 	}
 
-	at, rt, err := r.lh.Refresh(rq.RefreshToken)
+	tp, err := r.lh.Refresh(rq.RefreshToken)
 	if err != nil {
 		clog.Debug().Err(err).Msg("unable to refresh")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, TokenResponse{AccessToken: at, RefreshToken: rt})
+	c.JSON(http.StatusOK, tp)
 }

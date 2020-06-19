@@ -20,3 +20,13 @@ var ErrNotFound = errors.New("not found")
 
 // ErrPermission is returned when a permission error occurs
 var ErrPermission = errors.New("permission error")
+
+// ErrCookieFormat is returned when the cookie value can't be unmarshalled
+var ErrCookieFormat = errors.New("wrong cookie format")
+
+// ErrCookieNotFound is returned when the cookie can't be found
+var ErrCookieNotFound = errors.New("cookie not found")
+
+// ErrNoAuthenticationFound is returned when neither the bearer token or the
+// cookie can be found
+var ErrNoAuthenticationFound = errors.New("no authentication found")

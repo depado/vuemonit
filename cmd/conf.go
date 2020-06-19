@@ -21,13 +21,19 @@ type JWTConf struct {
 	Secret string `mapstructure:"secret"`
 }
 
+type CookieConf struct {
+	Domain string `mapstructure:"domain"`
+	HTTPS  bool   `mapstructure:"https"`
+}
+
 type ServerConf struct {
-	Host string   `mapstructure:"host"`
-	Port int      `mapstructure:"port"`
-	Mode string   `mapstructure:"mode"`
-	Log  bool     `mapstructure:"log"`
-	CORS CorsConf `mapstructure:"cors"`
-	JWT  JWTConf  `mapstructure:"jwt"`
+	Host   string     `mapstructure:"host"`
+	Port   int        `mapstructure:"port"`
+	Mode   string     `mapstructure:"mode"`
+	Log    bool       `mapstructure:"log"`
+	CORS   CorsConf   `mapstructure:"cors"`
+	JWT    JWTConf    `mapstructure:"jwt"`
+	Cookie CookieConf `mapstructure:"cookie"`
 }
 
 type FrontConf struct {

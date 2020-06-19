@@ -1,9 +1,7 @@
 package interactor
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/Depado/vuemonit/models"
 	"github.com/dgrijalva/jwt-go"
@@ -32,28 +30,14 @@ func NewInteractor(s StorageProvider, a AuthProvider, f Formatter, l *zerolog.Lo
 	}
 }
 
-func (i Interactor) NewService(user *models.User, name, description, url string) (*models.Service, error) {
-	s, err := models.NewService(user, url, name, description, 5*time.Minute)
-	if err != nil {
-		return nil, fmt.Errorf("create new service: %w", err)
-	}
-	if err = i.Store.SaveService(user, s); err != nil {
-		return nil, fmt.Errorf("save new service: %w", err)
-	}
-	if err = i.Scheduler.Start(s); err != nil {
-		return nil, fmt.Errorf("unable to start routine: %w", err)
-	}
-	return s, nil
-}
-
 // LogicHandler is the interface that must implement the struct holding the
 // usecases. The interactor struct must implement this interface.
 // This interface is the main entrypoint for the router.
 type LogicHandler interface {
 	Register(email, password string) error
-	Login(email, password string) (string, string, error)
-	Refresh(token string) (string, string, error)
-	AuthCheck(r *http.Request) (*models.User, error)
+	Login(email, password string) (*models.TokenPair, *http.Cookie, error)
+	Refresh(token string) (*models.TokenPair, error)
+	AuthCheck(w http.ResponseWriter, r *http.Request) (*models.User, error)
 	NewService(user *models.User, name, description, url string) (*models.Service, error)
 	FormatSelf(user *models.User) interface{}
 	FormatService(svc *models.Service) (interface{}, error)
@@ -62,9 +46,13 @@ type LogicHandler interface {
 
 // AuthProvider is a simple auth provider interface
 type AuthProvider interface {
-	GenerateTokenPair(user *models.User) (string, string, error)
-	Check(token string) (jwt.StandardClaims, error)
-	Extract(r *http.Request) (string, error)
+	GenerateTokenPair(user *models.User) (*models.TokenPair, error)
+	CheckToken(token string) (*jwt.StandardClaims, error)
+	ValidateBearerToken(r *http.Request) (*jwt.StandardClaims, error)
+
+	ValidateCookie(r *http.Request) (*jwt.StandardClaims, bool, error)
+	GenerateCookie(u *models.User, tp *models.TokenPair) (*http.Cookie, error)
+	DropAccessCookie() *http.Cookie
 }
 
 // Formatter is a simple interface in charge of formatting our documents

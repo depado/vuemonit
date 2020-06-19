@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/asdine/storm/v3"
@@ -31,7 +32,13 @@ func NewStormStorage(lc fx.Lifecycle, conf *cmd.Conf, log *zerolog.Logger) (inte
 	if err = db.Init(&models.User{}); err != nil {
 		return nil, fmt.Errorf("unable to init user bucket: %w", err)
 	}
-	log.Info().Str("bucket", "user").Msg("bucket initialized")
+	log.Debug().Str("bucket", "user").Msg("bucket initialized")
+
+	// Service bucket initialization
+	if err = db.Init(&models.Service{}); err != nil {
+		return nil, fmt.Errorf("unable to init service bucket: %w", err)
+	}
+	log.Debug().Str("bucket", "service").Msg("bucket initialized")
 
 	// TimedResponse bucket
 	err = db.Bolt.Update(func(tx *bolt.Tx) error {
@@ -43,7 +50,16 @@ func NewStormStorage(lc fx.Lifecycle, conf *cmd.Conf, log *zerolog.Logger) (inte
 	if err != nil {
 		return nil, fmt.Errorf("unable to create bucket: %w", err)
 	}
-	log.Info().Str("bucket", "history").Msg("bucket initialized")
+	log.Debug().Str("bucket", "history").Msg("bucket initialized")
 
-	return &StormStorage{db: db, log: log}, nil
+	st := &StormStorage{db: db, log: log}
+
+	lc.Append(fx.Hook{
+		OnStop: func(ctx context.Context) error {
+			st.log.Debug().Str("path", conf.Database.Path).Msg("closing database")
+			return st.db.Close()
+		},
+	})
+
+	return st, nil
 }
