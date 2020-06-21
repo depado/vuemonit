@@ -10,8 +10,11 @@ import (
 )
 
 // AuthRequired is a middleware to simply check if a user is logged-in or not
-// Given a valid JWT in the Authorization header, this will also fetch the user
-// from the database
+// This middleware will check both the cookie and the Authorization header,
+// allowing users to provide their authentication tokens the way they like
+// In the case of a cookie based authentication, if the access token is expired
+// this middleware will silently refresh the tokens as to avoid unnecessary
+// calls
 func (r Router) AuthRequired() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
 		var err error
@@ -41,6 +44,8 @@ func (r Router) AuthRequired() gin.HandlerFunc {
 	})
 }
 
+// getUserFromContext is a simple helper function that retrieves a user from
+// gin's context if any
 func getUserFromContext(c *gin.Context) (*models.User, error) {
 	if v, ok := c.Get("user"); ok {
 		if user, ok := v.(*models.User); ok {

@@ -7,8 +7,6 @@ import (
 	"github.com/Depado/vuemonit/interactor"
 	"github.com/asdine/storm/v3"
 	"github.com/gin-gonic/gin"
-	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
 )
 
 type TokenResponse struct {
@@ -16,32 +14,16 @@ type TokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-type RefreshQuery struct {
-	RefreshToken string `json:"refresh_token"`
-}
-
-func (r RefreshQuery) Validate() error {
-	return validation.ValidateStruct(&r,
-		validation.Field(&r.RefreshToken, validation.Required),
-	)
-}
-
-type CredentialQuery struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-func (c CredentialQuery) Validate() error {
-	return validation.ValidateStruct(&c,
-		validation.Field(&c.Email, validation.Required, is.Email),
-		validation.Field(&c.Password, validation.Length(12, 50)),
-	)
-}
-
+// Register will allow a new user to register
 func (r Router) Register(c *gin.Context) {
 	clog := r.log.With().Str("route", "/api/v1/register").Str("method", "POST").Logger()
 	var err error
 	var cq CredentialQuery
+
+	if !r.register {
+		c.JSON(http.StatusForbidden, gin.H{"error": "registering isn't allowed on this instance"})
+		return
+	}
 
 	if err = c.ShouldBind(&cq); err != nil {
 		clog.Debug().Err(err).Msg("unable to bind")
@@ -67,6 +49,11 @@ func (r Router) Register(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
+// Login is the route used to login a user. This will generate both a short
+// lived access token and long lived refresh token
+// This endpoint will send back both a cookie and a JSON containing those tokens
+// and thus can be used to login both on the frontend app and a standard http
+// client
 func (r Router) Login(c *gin.Context) {
 	clog := r.log.With().Str("route", "/api/v1/login").Str("method", "POST").Logger()
 	var err error
@@ -98,6 +85,9 @@ func (r Router) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, tp)
 }
 
+// Refresh is the route used to refresh the access token, given a valid refresh
+// token. This route should not be used by the frontend application since the
+// cookie based authentication does silent refreshes when needed
 func (r Router) Refresh(c *gin.Context) {
 	clog := r.log.With().Str("route", "/api/v1/refresh").Str("method", "POST").Logger()
 	var err error
@@ -123,4 +113,10 @@ func (r Router) Refresh(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, tp)
+}
+
+// Logout will return an invalidated cookie, effectively disabling the cookie
+// that was already present in the browser, if any
+func (r Router) Logout(c *gin.Context) {
+	http.SetCookie(c.Writer, r.lh.Logout())
 }

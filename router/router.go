@@ -18,10 +18,11 @@ type front struct {
 }
 
 type Router struct {
-	e     *gin.Engine
-	log   *zerolog.Logger
-	front front
-	lh    interactor.LogicHandler
+	e        *gin.Engine
+	log      *zerolog.Logger
+	front    front
+	lh       interactor.LogicHandler
+	register bool
 }
 
 func NewRouter(c *cmd.Conf, e *gin.Engine, log *zerolog.Logger, lh interactor.LogicHandler) *Router {
@@ -30,7 +31,8 @@ func NewRouter(c *cmd.Conf, e *gin.Engine, log *zerolog.Logger, lh interactor.Lo
 			serve: c.Front.Serve,
 			path:  c.Front.Path,
 		},
-		lh: lh,
+		lh:       lh,
+		register: c.Register,
 	}
 	if c.Server.Log {
 		r.e.Use(gin.Logger())
@@ -38,6 +40,7 @@ func NewRouter(c *cmd.Conf, e *gin.Engine, log *zerolog.Logger, lh interactor.Lo
 	return r
 }
 
+// SetRoutes will setup the various served routes
 func (r Router) SetRoutes() {
 	if r.front.serve {
 		r.e.Use(static.Serve("/", static.LocalFile(r.front.path, true)))
@@ -53,6 +56,7 @@ func (r Router) SetRoutes() {
 		g.POST("/register", r.Register)
 		g.POST("/login", r.Login)
 		g.POST("/refresh", r.Refresh)
+		g.GET("/logout", r.Logout)
 
 		// Data related routes
 		g.GET("/me", r.AuthRequired(), r.Me)

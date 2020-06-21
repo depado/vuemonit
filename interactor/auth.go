@@ -96,3 +96,7 @@ func (i Interactor) Refresh(token string) (*models.TokenPair, error) {
 
 	return i.Auth.GenerateTokenPair(user)
 }
+
+func (i Interactor) Logout() *http.Cookie {
+	return i.Auth.DropAccessCookie()
+}

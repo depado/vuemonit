@@ -37,6 +37,7 @@ type LogicHandler interface {
 	Register(email, password string) error
 	Login(email, password string) (*models.TokenPair, *http.Cookie, error)
 	Refresh(token string) (*models.TokenPair, error)
+	Logout() *http.Cookie
 	AuthCheck(w http.ResponseWriter, r *http.Request) (*models.User, error)
 	NewService(user *models.User, name, description, url string) (*models.Service, error)
 	FormatSelf(user *models.User) interface{}

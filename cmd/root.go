@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+func AddGlobalFlags(c *cobra.Command) {
+	c.PersistentFlags().Bool("allow_register", true, "alows new users to register or not")
+}
+
 // AddLoggerFlags adds support to configure the level of the logger.
 func AddLoggerFlags(c *cobra.Command) {
 	c.PersistentFlags().String("log.level", "info", "one of debug, info, warn, error or fatal")
@@ -61,6 +65,7 @@ func AddConfigurationFlag(c *cobra.Command) {
 // command and will bind those flags with viper.
 func AddAllFlags(c *cobra.Command) {
 	AddConfigurationFlag(c)
+	AddGlobalFlags(c)
 	AddLoggerFlags(c)
 	AddPrometheusFlags(c)
 	AddServerFlags(c)

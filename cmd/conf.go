@@ -65,6 +65,7 @@ type Conf struct {
 	Front      FrontConf      `mapstructure:"front"`
 	Prometheus PrometheusConf `mapstructure:"prometheus"`
 	Database   DatabaseConf   `mapstructure:"database"`
+	Register   bool           `mapstructure:"allow_register"`
 }
 
 // NewLogger will return a new logger
