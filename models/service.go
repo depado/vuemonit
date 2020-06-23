@@ -31,6 +31,7 @@ type Service struct {
 	Description string      `json:"description"`
 	HealthCheck HealthCheck `json:"healthcheck"`
 	UserID      string      `json:"user_id"`
+	Count       int         `json:"count"`
 }
 
 func NewService(user *User, hurl, name, description string, every time.Duration) (*Service, error) {
@@ -114,12 +115,13 @@ func (s *Service) Fetch() (*TimedResponse, error) {
 
 	resp, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
-		defer resp.Body.Close()
 		return nil, fmt.Errorf("unable to roundtrip for service %v: %w", s.Name, err)
 	}
+	defer resp.Body.Close()
 	io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
 	s.HealthCheck.Status = resp.StatusCode
 	s.HealthCheck.At = time.Now()
+	s.Count++
 	return &TimedResponse{
 		ID:        xid.New(),
 		Server:    s.HealthCheck.ServerResponse,

@@ -46,6 +46,14 @@ func (s StormStorage) GetServiceByID(id string) (*models.Service, error) {
 	return svc, nil
 }
 
+func (s StormStorage) GetServices(user *models.User) ([]*models.Service, error) {
+	svc := []*models.Service{}
+	if err := s.db.Find("UserID", user.ID, &svc); err != nil {
+		return nil, fmt.Errorf("get services: %w", err)
+	}
+	return svc, nil
+}
+
 func (s StormStorage) GetAllServices() ([]*models.Service, error) {
 	svx := []*models.Service{}
 	if err := s.db.All(&svx); err != nil {

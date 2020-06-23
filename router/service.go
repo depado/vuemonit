@@ -60,14 +60,7 @@ func (r Router) PostService(c *gin.Context) {
 		return
 	}
 
-	out, err := r.lh.FormatService(s)
-	if err != nil {
-		clog.Err(err).Msg("unable to format service")
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-
-	c.JSON(http.StatusOK, out)
+	c.JSON(http.StatusOK, r.lh.FormatService(s))
 }
 
 func (r Router) GetService(c *gin.Context) {
@@ -84,8 +77,9 @@ func (r Router) GetService(c *gin.Context) {
 		return
 	}
 
-	out, err := r.lh.GetServiceByID(u, id)
+	s, err := r.lh.GetServiceByID(u, id)
 	if err != nil {
+		clog.Debug().Err(err).Send()
 		if errors.Is(err, interactor.ErrNotFound) || errors.Is(err, storm.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "service not found"})
 		} else if errors.Is(err, interactor.ErrPermission) {
@@ -96,5 +90,29 @@ func (r Router) GetService(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, out)
+	c.JSON(http.StatusOK, r.lh.FormatService(s))
+}
+
+func (r Router) GetServices(c *gin.Context) {
+	clog := r.log.With().Str("route", "/api/v1/services").Str("method", "GET").Logger()
+
+	u, err := getUserFromContext(c)
+	if err != nil {
+		clog.Err(err).Msg("tried to access auth required route without a user")
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	svx, err := r.lh.GetServices(u)
+	if err != nil {
+		clog.Debug().Err(err).Send()
+		if errors.Is(err, interactor.ErrNotFound) || errors.Is(err, storm.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "services not found"})
+		} else {
+			c.Status(http.StatusInternalServerError)
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, r.lh.FormatServices(svx))
 }

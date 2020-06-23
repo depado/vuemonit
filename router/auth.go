@@ -31,7 +31,7 @@ func (r Router) Register(c *gin.Context) {
 		return
 	}
 
-	if err = cq.Validate(); err != nil {
+	if err = cq.ValidateRegister(); err != nil {
 		clog.Debug().Err(err).Msg("validation failed")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -65,7 +65,7 @@ func (r Router) Login(c *gin.Context) {
 		return
 	}
 
-	if err = cq.Validate(); err != nil {
+	if err = cq.ValidateLogin(); err != nil {
 		clog.Debug().Err(err).Msg("validation failed")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -73,7 +73,7 @@ func (r Router) Login(c *gin.Context) {
 
 	tp, cookie, err := r.lh.Login(cq.Email, cq.Password)
 	if err != nil {
-		if errors.Is(err, interactor.ErrInvalidCredentials) {
+		if errors.Is(err, interactor.ErrInvalidCredentials) || errors.Is(err, interactor.ErrNotFound) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "wrong credentials"})
 			return
 		}

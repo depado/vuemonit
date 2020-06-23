@@ -2,7 +2,9 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/asdine/storm/v3"
 	"github.com/rs/zerolog"
@@ -53,6 +55,7 @@ func NewStormStorage(lc fx.Lifecycle, conf *cmd.Conf, log *zerolog.Logger) (inte
 	log.Debug().Str("bucket", "history").Msg("bucket initialized")
 
 	st := &StormStorage{db: db, log: log}
+	go st.SyncCount()
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
@@ -62,4 +65,32 @@ func NewStormStorage(lc fx.Lifecycle, conf *cmd.Conf, log *zerolog.Logger) (inte
 	})
 
 	return st, nil
+}
+
+func (st StormStorage) SyncCount() {
+	start := time.Now()
+	var unsynced int
+	st.log.Debug().Msg("starting sync routine")
+	svx, err := st.GetAllServices()
+	if err != nil {
+		st.log.Err(err).Msg("unable to query all services")
+		return
+	}
+	for _, s := range svx {
+		trc, err := st.CountTimedResponses(s)
+		if err != nil {
+			if !errors.Is(err, storm.ErrNotFound) && !errors.Is(err, interactor.ErrNotFound) {
+				st.log.Err(err).Str("service", s.ID).Msg("unable to count timed responses")
+			}
+			continue
+		}
+		if s.Count != trc {
+			unsynced++
+			s.Count = trc
+			if err = st.SaveRawService(s); err != nil {
+				st.log.Err(err).Str("service", s.ID).Msg("unable to save service")
+			}
+		}
+	}
+	st.log.Debug().Dur("took", time.Since(start)).Int("unsynced", unsynced).Msg("sync routine completed")
 }

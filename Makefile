@@ -13,7 +13,7 @@ help:
 
 .PHONY: front
 front:
-	cd front && npm install && npm run build
+	cd front && npm install && ./node_modules/.bin/quasar build
 
 .PHONY: build
 build: ## Build

@@ -20,3 +20,22 @@ func (i Interactor) NewService(user *models.User, name, description, url string)
 	}
 	return s, nil
 }
+
+func (i Interactor) GetServices(user *models.User) ([]*models.Service, error) {
+	svx, err := i.Store.GetServices(user)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get services: %w", err)
+	}
+	return svx, nil
+}
+
+func (i Interactor) GetServiceByID(user *models.User, id string) (*models.Service, error) {
+	s, err := i.Store.GetServiceByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get service: %w", err)
+	}
+	if s.UserID != user.ID {
+		return nil, ErrPermission
+	}
+	return s, nil
+}

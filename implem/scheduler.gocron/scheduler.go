@@ -61,7 +61,7 @@ func NewGocronScheduler(sp interactor.StorageProvider, log *zerolog.Logger) (int
 	}
 
 	for _, s := range svx {
-		_, err := gs.sch.Every(5).Minutes().SetTag([]string{s.ID}).Do(gs.fetchAsync, s)
+		_, err := gs.sch.Every(10).Seconds().SetTag([]string{s.ID}).Do(gs.fetchAsync, s)
 		if err != nil {
 			gs.log.Err(err).Str("id", s.ID).Msg("unable to start routine")
 		} else {

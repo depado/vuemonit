@@ -20,9 +20,16 @@ type CredentialQuery struct {
 	Password string `json:"password"`
 }
 
-func (c CredentialQuery) Validate() error {
+func (c CredentialQuery) ValidateRegister() error {
 	return validation.ValidateStruct(&c,
 		validation.Field(&c.Email, validation.Required, is.Email),
-		validation.Field(&c.Password, validation.Length(12, 50)),
+		validation.Field(&c.Password, validation.Required, validation.Length(12, 50)),
+	)
+}
+
+func (c CredentialQuery) ValidateLogin() error {
+	return validation.ValidateStruct(&c,
+		validation.Field(&c.Email, validation.Required),
+		validation.Field(&c.Password, validation.Required),
 	)
 }

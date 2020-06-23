@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/xid"
 
+	"github.com/Depado/vuemonit/interactor"
 	"github.com/Depado/vuemonit/models"
 )
 
@@ -25,7 +26,7 @@ func (s StormStorage) GetUserByEmail(email string) (*models.User, error) {
 	n := time.Now()
 	u := &models.User{}
 	if err := s.db.One("Email", email, u); err != nil {
-		return nil, fmt.Errorf("find by email: %w", err)
+		return nil, fmt.Errorf("find by email: %v: %w", err, interactor.ErrNotFound)
 	}
 	s.log.Debug().Str("id", u.ID).Dur("took", time.Since(n)).Msg("retrieved by email")
 	return u, nil
@@ -35,7 +36,7 @@ func (s StormStorage) GetUserByID(id string) (*models.User, error) {
 	n := time.Now()
 	u := &models.User{}
 	if err := s.db.One("ID", id, u); err != nil {
-		return nil, fmt.Errorf("find by id: %w", err)
+		return nil, fmt.Errorf("find by id: %v: %w", err, interactor.ErrNotFound)
 	}
 	s.log.Debug().Str("id", u.ID).Dur("took", time.Since(n)).Msg("retrieved by id")
 	return u, nil

@@ -49,7 +49,7 @@ func (s StormStorage) GetTimedResponses(svc *models.Service) ([]*models.TimedRes
 		}
 		c := b.Cursor()
 
-		for k, v := c.First(); k != nil; k, v = c.Next() {
+		for k, v := c.Last(); k != nil; k, v = c.Prev() {
 			t := &TimedResponse{}
 			if err := proto.Unmarshal(v, t); err != nil {
 				return fmt.Errorf("unable to unmarshal data: %w", err)

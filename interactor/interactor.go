@@ -40,9 +40,15 @@ type LogicHandler interface {
 	Logout() *http.Cookie
 	AuthCheck(w http.ResponseWriter, r *http.Request) (*models.User, error)
 	NewService(user *models.User, name, description, url string) (*models.Service, error)
+
 	FormatSelf(user *models.User) interface{}
-	FormatService(svc *models.Service) (interface{}, error)
-	GetServiceByID(user *models.User, id string) (interface{}, error)
+	FormatService(svc *models.Service) interface{}
+	FormatServices(svx []*models.Service) interface{}
+	FormatTimedResponses(tr []*models.TimedResponse) interface{}
+
+	GetServiceByID(user *models.User, id string) (*models.Service, error)
+	GetServices(user *models.User) ([]*models.Service, error)
+	GetTimedResponsesByServiceID(user *models.User, id string) ([]*models.TimedResponse, error)
 }
 
 // AuthProvider is a simple auth provider interface
@@ -59,7 +65,9 @@ type AuthProvider interface {
 // Formatter is a simple interface in charge of formatting our documents
 type Formatter interface {
 	Self(user *models.User) interface{}
-	Service(svc *models.Service, trcount int) interface{}
+	Service(svc *models.Service) interface{}
+	Services(svx []*models.Service) interface{}
+	TimedResponses(tr []*models.TimedResponse) interface{}
 }
 
 // StorageProvider is a storage interface
@@ -67,13 +75,17 @@ type StorageProvider interface {
 	SaveService(user *models.User, svc *models.Service) error
 	SaveRawService(svc *models.Service) error
 	SaveUser(usr *models.User) error
+
 	GetUserByEmail(email string) (*models.User, error)
 	GetUserByID(id string) (*models.User, error)
+
 	GetTimedResponses(svc *models.Service) ([]*models.TimedResponse, error)
 	CountTimedResponses(svc *models.Service) (int, error)
 	SaveTimedResponse(tr *models.TimedResponse) error
+
 	GetAllServices() ([]*models.Service, error)
 	GetServiceByID(id string) (*models.Service, error)
+	GetServices(user *models.User) ([]*models.Service, error)
 }
 
 type Scheduler interface {

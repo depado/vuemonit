@@ -61,6 +61,8 @@ func (r Router) SetRoutes() {
 		// Data related routes
 		g.GET("/me", r.AuthRequired(), r.Me)
 		g.POST("/service", r.AuthRequired(), r.PostService)
+		g.GET("/services", r.AuthRequired(), r.GetServices)
 		g.GET("/service/:id", r.AuthRequired(), r.GetService)
+		g.GET("/service/:id/tr", r.AuthRequired(), r.GetTimedResponses)
 	}
 }
