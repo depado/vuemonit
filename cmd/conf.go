@@ -38,6 +38,7 @@ type ServerConf struct {
 
 type FrontConf struct {
 	Serve bool   `mapstructure:"serve"`
+	Embed bool   `mapstructure:"embed"`
 	Path  string `mapstructure:"path"`
 }
 

@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/rs/xid"
@@ -92,6 +93,7 @@ func (s StormStorage) CountTimedResponses(svc *models.Service) (int, error) {
 }
 
 func (s StormStorage) SaveTimedResponse(tr *models.TimedResponse) error {
+	start := time.Now()
 	if tr.ServiceID == "" {
 		return errors.New("timed response has no service id associated")
 	}
@@ -129,6 +131,6 @@ func (s StormStorage) SaveTimedResponse(tr *models.TimedResponse) error {
 
 	// If the transaction succeeded, we can give the timed response its new id
 	tr.ID = id
-	s.log.Debug().Str("id", tr.ID.String()).Msg("saved timed reponse")
+	s.log.Debug().Str("id", tr.ID.String()).Dur("took", time.Since(start)).Msg("saved timed reponse")
 	return nil
 }

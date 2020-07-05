@@ -142,8 +142,14 @@
                     >{{ (service.count / 100000).toFixed(2) }}%</q-item-label>
                   </q-item-section>
                 </q-item>
+                <q-item>
+                  <q-item-section>
+                    <q-item-label>Latest Metric</q-item-label>
+                    <q-item-label caption lines="2">{{ formatDate(service.healthcheck.at) }}</q-item-label>
+                  </q-item-section>
+                </q-item>
               </q-list>
-              <q-list>
+              <q-list class="col-auto">
                 <q-item>
                   <q-item-section>
                     <q-item-label>Metrics History</q-item-label>
@@ -166,21 +172,8 @@
         </div>
       </q-page>
 
-      <q-dialog v-model="prompt" persistent>
-        <q-card style="min-width: 350px">
-          <q-card-section>
-            <div class="text-h6">Add a Service</div>
-          </q-card-section>
-
-          <q-card-section class="q-pt-none">
-            <q-input dense autofocus @keyup.enter="prompt = false" />
-          </q-card-section>
-
-          <q-card-actions align="right" class="text-primary">
-            <q-btn flat label="Cancel" v-close-popup />
-            <q-btn flat label="Add Service" v-close-popup />
-          </q-card-actions>
-        </q-card>
+      <q-dialog v-model="prompt">
+        <service-form />
       </q-dialog>
       <q-page-sticky position="bottom-right" :offset="[18, 18]">
         <q-fab icon="mdi-plus" direction="up" color="primary">
@@ -192,12 +185,16 @@
 </template>
 
 <script>
+import { date } from 'quasar';
 import humanizeDuration from 'humanize-duration';
+
 import LineChart from '../components/LineChart.vue';
+import ServiceForm from '../components/ServiceForm.vue';
 
 export default {
   components: {
-    LineChart
+    LineChart,
+    ServiceForm
   },
   data() {
     return {
@@ -250,13 +247,19 @@ export default {
             {
               gridLines: {
                 display: false
+                // drawTicks: false,
+                // drawBorder: false
               },
               ticks: {
                 autoSkip: true,
                 maxTicksLimit: 5,
                 beginAtZero: true,
                 callback: function(label) {
-                  return label / 1000000 + 'ms';
+                  let ms = label / 1000000;
+                  if (ms < 1000) {
+                    return ms + 'ms';
+                  }
+                  return ms / 1000 + 's';
                 }
               }
             }
@@ -266,6 +269,9 @@ export default {
     };
   },
   methods: {
+    formatDate: function(input) {
+      return date.formatDate(input, 'YYYY-MM-DD HH:mm:ss');
+    },
     humanize: function(input) {
       return humanizeDuration(input, { largest: 2, conjunction: ' and ' });
     },

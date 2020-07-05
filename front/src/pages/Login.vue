@@ -6,8 +6,7 @@
           <q-card-section>
             <q-form class="q-gutter-md" ref="loginForm">
               <q-input
-                square
-                filled
+                outlined
                 v-model="email"
                 type="email"
                 label="Email"
@@ -15,8 +14,7 @@
                 :rules="[ val => val && val.length > 0 || 'Email is required']"
               />
               <q-input
-                square
-                filled
+                outlined
                 v-model="password"
                 type="password"
                 label="Password"
@@ -37,7 +35,7 @@
             />
           </q-card-actions>
           <q-card-section class="text-center q-pa-none">
-            <p class="text-grey-6">Not reigistered? Created an Account</p>
+            <p class="text-grey-6">Create an account</p>
           </q-card-section>
         </q-card>
       </div>

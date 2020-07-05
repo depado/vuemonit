@@ -42,6 +42,7 @@ func AddServerFlags(c *cobra.Command) {
 
 func AddFrontFlags(c *cobra.Command) {
 	c.PersistentFlags().Bool("front.serve", true, "let the server serve the frontend")
+	c.PersistentFlags().Bool("front.embed", false, "serve embedded frontend")
 	c.PersistentFlags().String("front.path", "front/dist/spa", "path to the frontend build")
 }
 

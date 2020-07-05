@@ -6,15 +6,16 @@ import (
 
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 
 	"github.com/Depado/vuemonit/cmd"
 	"github.com/Depado/vuemonit/interactor"
-	"github.com/rs/zerolog"
 )
 
 type front struct {
 	serve bool
 	path  string
+	embed bool
 }
 
 type Router struct {
@@ -30,6 +31,7 @@ func NewRouter(c *cmd.Conf, e *gin.Engine, log *zerolog.Logger, lh interactor.Lo
 		front: front{
 			serve: c.Front.Serve,
 			path:  c.Front.Path,
+			embed: c.Front.Embed,
 		},
 		lh:       lh,
 		register: c.Register,
@@ -42,9 +44,13 @@ func NewRouter(c *cmd.Conf, e *gin.Engine, log *zerolog.Logger, lh interactor.Lo
 
 // SetRoutes will setup the various served routes
 func (r Router) SetRoutes() {
-	if r.front.serve {
+	if r.front.embed && r.front.serve {
+		r.SetupEmbeddedFront()
+	} else if r.front.serve {
 		r.e.Use(static.Serve("/", static.LocalFile(r.front.path, true)))
-		r.e.LoadHTMLGlob(path.Join(r.front.path, "index.html"))
+		r.e.NoRoute(func(c *gin.Context) {
+			c.File(path.Join(r.front.path, "index.html"))
+		})
 	}
 
 	g := r.e.Group("/api/v1")

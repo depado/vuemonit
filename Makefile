@@ -19,6 +19,14 @@ front:
 build: ## Build
 	go build $(LDFLAGS) -o $(BINARY) 
 
+.PHONY: fullbuild
+fullbuild:
+	protoc --go_out=. implem/storage.storm/*.proto
+	cd front && npm install && ./node_modules/.bin/quasar build && mv dist/spa/index.html dist/spa/main.html && cd ..
+	statik -src=./front/dist/spa/ -f
+	mv front/dist/spa/main.html front/dist/spa/index.html
+	go build $(LDFLAGS) -o $(BINARY)
+
 .PHONY: proto
 proto: ## Generate protobuf
 	protoc --go_out=. implem/storage.storm/*.proto
