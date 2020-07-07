@@ -38,7 +38,10 @@ func newTimedResponseFromProto(k []byte, p *TimedResponse) (*models.TimedRespons
 	}, nil
 }
 
-func (s StormStorage) GetTimedResponses(svc *models.Service) ([]*models.TimedResponse, error) {
+func (s StormStorage) GetTimedResponseRange(svc *models.Service, from, to time.Time) ([]*models.TimedResponse, error) {
+	// Genreate an xid with the given time to get the prefix matching the from
+	// date
+	prefix := xid.NewWithTime(from).Bytes()[:4]
 	if svc.ID == "" {
 		return nil, fmt.Errorf("service has no ID: %w", interactor.ErrNotFound)
 	}
@@ -50,7 +53,41 @@ func (s StormStorage) GetTimedResponses(svc *models.Service) ([]*models.TimedRes
 		}
 		c := b.Cursor()
 
-		for k, v := c.Last(); k != nil; k, v = c.Prev() {
+		var ctr *models.TimedResponse
+		for k, v := c.Seek(prefix); k != nil && (ctr == nil || ctr.At.Before(to)); k, v = c.Next() {
+			t := &TimedResponse{}
+			if err := proto.Unmarshal(v, t); err != nil {
+				return fmt.Errorf("unable to unmarshal data: %w", err)
+			}
+			tr, err := newTimedResponseFromProto(k, t)
+			if err != nil {
+				return fmt.Errorf("unable to parse timed response: %w", err)
+			}
+			tr.ServiceID = svc.ID
+			ctr = tr
+			xtr = append(xtr, tr)
+		}
+		return nil
+	})
+	if err != nil {
+		return xtr, fmt.Errorf("unable to query: %w", err)
+	}
+	return xtr, nil
+}
+
+func (s StormStorage) GetTimedResponses(svc *models.Service, limit int, reverse bool) ([]*models.TimedResponse, error) {
+	if svc.ID == "" {
+		return nil, fmt.Errorf("service has no ID: %w", interactor.ErrNotFound)
+	}
+	xtr := []*models.TimedResponse{}
+	err := s.db.Bolt.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName)).Bucket([]byte(svc.ID))
+		if b == nil {
+			return interactor.ErrNotFound
+		}
+		it := NewIterator(b.Cursor(), reverse)
+
+		for k, v := it.initial(); k != nil && (it.count < limit || limit == 0); k, v = it.next() {
 			t := &TimedResponse{}
 			if err := proto.Unmarshal(v, t); err != nil {
 				return fmt.Errorf("unable to unmarshal data: %w", err)
@@ -61,6 +98,7 @@ func (s StormStorage) GetTimedResponses(svc *models.Service) ([]*models.TimedRes
 			}
 			tr.ServiceID = svc.ID
 			xtr = append(xtr, tr)
+			it.add()
 		}
 		return nil
 	})

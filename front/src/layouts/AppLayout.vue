@@ -281,7 +281,7 @@ export default {
         const el = this.services[i];
         pa.push(
           this.$axios.get(
-            'http://localhost:8081/api/v1/service/' + el.id + '/tr'
+            'http://localhost:8081/api/v1/service/' + el.id + '/tr/tail'
           )
         );
       }
@@ -293,24 +293,24 @@ export default {
             let srvData = [];
             let totalData = [];
             let dates = [];
-            for (let i = 0; i < res.data.length && i < 100; i++) {
+            for (let i = 0; i < res.data.length; i++) {
               srvData[i] = res.data[i].server;
               totalData[i] = res.data[i].total;
               dates[i] = res.data[i].at;
             }
             el.chartData = {
-              labels: dates.reverse(),
+              labels: dates,
               datasets: [
                 {
                   label: 'Server Response',
-                  data: srvData.reverse(),
+                  data: srvData,
                   backgroundColor: [['rgba(255, 255, 255, 0.0)']],
                   borderColor: ['#2196f3'],
                   borderWidth: 1
                 },
                 {
                   label: 'Total Response',
-                  data: totalData.reverse(),
+                  data: totalData,
                   backgroundColor: [['rgba(255, 255, 255, 0.0)']],
                   borderColor: ['#4caf50'],
                   borderWidth: 1

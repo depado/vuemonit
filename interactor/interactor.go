@@ -2,6 +2,7 @@ package interactor
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/Depado/vuemonit/models"
 	"github.com/dgrijalva/jwt-go"
@@ -48,7 +49,8 @@ type LogicHandler interface {
 
 	GetServiceByID(user *models.User, id string) (*models.Service, error)
 	GetServices(user *models.User) ([]*models.Service, error)
-	GetTimedResponsesByServiceID(user *models.User, id string) ([]*models.TimedResponse, error)
+	GetTimedResponsesByServiceID(user *models.User, id string, limit int, reverse bool) ([]*models.TimedResponse, error)
+	GetTimedResponseRange(user *models.User, id string, from, to time.Time) ([]*models.TimedResponse, error)
 }
 
 // AuthProvider is a simple auth provider interface
@@ -79,7 +81,8 @@ type StorageProvider interface {
 	GetUserByEmail(email string) (*models.User, error)
 	GetUserByID(id string) (*models.User, error)
 
-	GetTimedResponses(svc *models.Service) ([]*models.TimedResponse, error)
+	GetTimedResponses(svc *models.Service, limit int, reverse bool) ([]*models.TimedResponse, error)
+	GetTimedResponseRange(svc *models.Service, from, to time.Time) ([]*models.TimedResponse, error)
 	CountTimedResponses(svc *models.Service) (int, error)
 	SaveTimedResponse(tr *models.TimedResponse) error
 

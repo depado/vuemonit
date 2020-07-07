@@ -11,7 +11,7 @@ func Run(r *Router, c *cmd.Conf) {
 	r.log.Info().Str("host", c.Server.Host).Int("port", c.Server.Port).Msg("starting server")
 	go func() {
 		if err := r.e.Run(fmt.Sprintf("%s:%d", c.Server.Host, c.Server.Port)); err != nil {
-			r.log.Err(err).Msg("unable to start server")
+			r.log.Fatal().Err(err).Msg("unable to start server")
 		}
 	}()
 }

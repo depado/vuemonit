@@ -86,7 +86,6 @@ var addUser = &cobra.Command{
 
 func run() {
 	fx.New(
-		fx.NopLogger,
 		fx.Provide(
 			cmd.NewConf,
 			cmd.NewLogger,

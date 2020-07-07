@@ -7,3 +7,4 @@ vuemonit
 coverage.txt
 conf*.yml
 *.db
+dockervol

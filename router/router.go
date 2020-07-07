@@ -70,5 +70,6 @@ func (r Router) SetRoutes() {
 		g.GET("/services", r.AuthRequired(), r.GetServices)
 		g.GET("/service/:id", r.AuthRequired(), r.GetService)
 		g.GET("/service/:id/tr", r.AuthRequired(), r.GetTimedResponses)
+		g.GET("/service/:id/tr/tail", r.AuthRequired(), r.TailTimedResponses)
 	}
 }

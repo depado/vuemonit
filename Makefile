@@ -5,7 +5,7 @@ export CGO_ENABLED=0
 export VERSION=$(shell git describe --abbrev=0 --tags 2> /dev/null || echo "0.1.0")
 export BUILD=$(shell git rev-parse HEAD 2> /dev/null || echo "undefined")
 BINARY=vuemonit
-LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Build=$(BUILD)"
+LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Build=$(BUILD) -s -w"
 
 .PHONY: help
 help:
@@ -20,12 +20,15 @@ build: ## Build
 	go build $(LDFLAGS) -o $(BINARY) 
 
 .PHONY: fullbuild
-fullbuild:
-	protoc --go_out=. implem/storage.storm/*.proto
-	cd front && npm install && ./node_modules/.bin/quasar build && mv dist/spa/index.html dist/spa/main.html && cd ..
+fullbuild: proto front
+	mv front/dist/spa/index.html front/dist/spa/main.html
 	statik -src=./front/dist/spa/ -f
 	mv front/dist/spa/main.html front/dist/spa/index.html
 	go build $(LDFLAGS) -o $(BINARY)
+
+.PHONY: compressed
+compressed: fullbuild
+	upx --brute $(BINARY)
 
 .PHONY: proto
 proto: ## Generate protobuf
