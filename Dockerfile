@@ -1,11 +1,11 @@
-FROM node:14.5.0 AS front_builder
+FROM node:14.5.0-alpine3.12 AS front_builder
 
 ADD ./front /front
 WORKDIR /front
 RUN npm install && ./node_modules/.bin/quasar build
 
 # Backend Build Step
-FROM golang:1.14.4-alpine3.12 AS builder
+FROM golang:1.15.0-alpine3.12 AS builder
 
 # Prerequisites
 RUN apk update && apk add --no-cache upx
@@ -35,4 +35,4 @@ COPY --from=builder /tmp/vuemonit /go/bin/vuemonit
 VOLUME [ "/data" ]
 WORKDIR /data
 EXPOSE 8080
-ENTRYPOINT ["/go/bin/vuemonit", "--server.port", "8080"]
+ENTRYPOINT ["/go/bin/vuemonit", "--server.port", "8080", "--server.host", "0.0.0.0"]

@@ -37,7 +37,9 @@ var rootCmd = &cobra.Command{
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show build and version",
-	Run:   func(cmd *cobra.Command, args []string) { fmt.Printf("Build: %s\nVersion: %s\n", Build, Version) },
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("Build: %s\nVersion: %s\n", Build, Version)
+	},
 }
 
 var userCmd = &cobra.Command{

@@ -15,7 +15,7 @@ type User struct {
 	Email    string `storm:"unique" json:"email"`
 	Password []byte `json:"password"`
 
-	CreatedAt time.Time `storm:"index" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	LastLogin time.Time `json:"last_login"`
 }

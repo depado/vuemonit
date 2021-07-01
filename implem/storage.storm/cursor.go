@@ -25,7 +25,6 @@ func stdIterator(c *bolt.Cursor) *iterator {
 	return &iterator{
 		initial: c.First,
 		next:    c.Next,
-		count:   0,
 	}
 }
 
@@ -33,6 +32,5 @@ func reverseIterator(c *bolt.Cursor) *iterator {
 	return &iterator{
 		initial: c.Last,
 		next:    c.Prev,
-		count:   0,
 	}
 }
