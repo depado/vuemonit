@@ -31,11 +31,12 @@ func NewJWTAuthProvider(conf *cmd.Conf) interactor.AuthProvider {
 func (j jwtProvider) GenerateTokenPair(user *models.User) (*models.TokenPair, error) {
 	// Create the basic claims using the standard claims because we don't need
 	// anything else
-	claims := &jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
+
+	claims := &jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 		Subject:   user.ID,
-		IssuedAt:  time.Now().Unix(),
-		NotBefore: time.Now().Unix(),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		NotBefore: jwt.NewNumericDate(time.Now()),
 	}
 
 	access, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(j.secret)
@@ -43,11 +44,11 @@ func (j jwtProvider) GenerateTokenPair(user *models.User) (*models.TokenPair, er
 		return nil, fmt.Errorf("signing access token: %w", err)
 	}
 
-	claims = &jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+	claims = &jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		Subject:   user.ID,
-		IssuedAt:  time.Now().Unix(),
-		NotBefore: time.Now().Unix(),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		NotBefore: jwt.NewNumericDate(time.Now()),
 	}
 
 	refresh, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(j.secret)
