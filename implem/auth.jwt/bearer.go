@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Depado/vuemonit/interactor"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // Convenience function that extracts the JWT from the incoming request's header
@@ -23,7 +23,7 @@ func (j jwtProvider) ExtractBearerToken(r *http.Request) (string, error) {
 	return raw, nil
 }
 
-func (j jwtProvider) ValidateBearerToken(r *http.Request) (*jwt.StandardClaims, error) {
+func (j jwtProvider) ValidateBearerToken(r *http.Request) (*jwt.RegisteredClaims, error) {
 	t, err := j.ExtractBearerToken(r)
 	if err != nil {
 		return nil, fmt.Errorf("extract bearer token: %w", err)

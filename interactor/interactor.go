@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Depado/vuemonit/models"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/rs/zerolog"
 )
 
@@ -56,10 +56,10 @@ type LogicHandler interface {
 // AuthProvider is a simple auth provider interface
 type AuthProvider interface {
 	GenerateTokenPair(user *models.User) (*models.TokenPair, error)
-	CheckToken(token string) (*jwt.StandardClaims, error)
-	ValidateBearerToken(r *http.Request) (*jwt.StandardClaims, error)
+	CheckToken(token string) (*jwt.RegisteredClaims, error)
+	ValidateBearerToken(r *http.Request) (*jwt.RegisteredClaims, error)
 
-	ValidateCookie(r *http.Request) (*jwt.StandardClaims, bool, error)
+	ValidateCookie(r *http.Request) (*jwt.RegisteredClaims, bool, error)
 	GenerateCookie(u *models.User, tp *models.TokenPair) (*http.Cookie, error)
 	DropAccessCookie() *http.Cookie
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Depado/vuemonit/models"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // Login allows users to login and will return an access token on successful
@@ -58,7 +58,7 @@ func (i Interactor) AuthCheck(w http.ResponseWriter, r *http.Request) (*models.U
 	var err error
 	var user *models.User
 	var issue bool
-	var claims *jwt.StandardClaims
+	var claims *jwt.RegisteredClaims
 
 	// Request has bearer auth, process and return
 	if claims, err = i.Auth.ValidateBearerToken(r); err != nil {

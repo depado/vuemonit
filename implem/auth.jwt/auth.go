@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/Depado/vuemonit/cmd"
 	"github.com/Depado/vuemonit/interactor"
@@ -60,8 +60,8 @@ func (j jwtProvider) GenerateTokenPair(user *models.User) (*models.TokenPair, er
 
 // CheckJWT will check whether or not the JWT is valid and return its claims if
 // so
-func (j jwtProvider) CheckToken(token string) (*jwt.StandardClaims, error) {
-	claims := &jwt.StandardClaims{}
+func (j jwtProvider) CheckToken(token string) (*jwt.RegisteredClaims, error) {
+	claims := &jwt.RegisteredClaims{}
 
 	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return j.secret, nil

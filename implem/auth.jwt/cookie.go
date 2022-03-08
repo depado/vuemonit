@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/Depado/vuemonit/interactor"
 	"github.com/Depado/vuemonit/models"
@@ -36,7 +36,7 @@ func (j jwtProvider) GenerateCookie(u *models.User, tp *models.TokenPair) (*http
 	}, nil
 }
 
-func (j jwtProvider) ValidateCookie(r *http.Request) (*jwt.StandardClaims, bool, error) {
+func (j jwtProvider) ValidateCookie(r *http.Request) (*jwt.RegisteredClaims, bool, error) {
 	tp, err := j.extractCookieTokens(r)
 	if err != nil {
 		return nil, false, fmt.Errorf("extract cookie token: %w", err)
