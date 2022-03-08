@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/rs/xid"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/Depado/vuemonit/interactor"
 	"github.com/Depado/vuemonit/models"
@@ -21,19 +21,11 @@ func newTimedResponseFromProto(k []byte, p *TimedResponse) (*models.TimedRespons
 	if err != nil {
 		return nil, fmt.Errorf("parse xid: %w", err)
 	}
-	s, err := ptypes.Duration(p.GetServer())
-	if err != nil {
-		return nil, fmt.Errorf("parse server duration: %w", err)
-	}
-	t, err := ptypes.Duration(p.GetTotal())
-	if err != nil {
-		return nil, fmt.Errorf("parse total duration: %w", err)
-	}
 	return &models.TimedResponse{
 		ID:     id,
 		At:     id.Time(),
-		Server: s,
-		Total:  t,
+		Server: p.GetServer().AsDuration(),
+		Total:  p.GetTotal().AsDuration(),
 		Status: int(p.GetStatus()),
 	}, nil
 }
@@ -141,8 +133,8 @@ func (s StormStorage) SaveTimedResponse(tr *models.TimedResponse) error {
 	}
 	pbtr := &TimedResponse{
 		Status: int32(tr.Status),
-		Server: ptypes.DurationProto(tr.Server),
-		Total:  ptypes.DurationProto(tr.Total),
+		Server: durationpb.New(tr.Server),
+		Total:  durationpb.New(tr.Total),
 	}
 	v, err := proto.Marshal(pbtr)
 	if err != nil {

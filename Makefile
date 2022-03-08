@@ -28,7 +28,7 @@ fullbuild: proto front
 
 .PHONY: compressed
 compressed: fullbuild
-	upx --brute $(BINARY)
+	upx --best $(BINARY)
 
 .PHONY: proto
 proto: ## Generate protobuf
