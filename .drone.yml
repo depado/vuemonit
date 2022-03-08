@@ -42,7 +42,7 @@ name: frontend
 
 steps:
   - name: build
-    image: node
+    image: node:lts
     commands:
       - make front
 
