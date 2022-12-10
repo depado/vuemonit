@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
@@ -118,7 +117,7 @@ func (s *Service) Fetch() (*TimedResponse, error) {
 		return nil, fmt.Errorf("unable to roundtrip for service %v: %w", s.Name, err)
 	}
 	defer resp.Body.Close()
-	io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
+	io.Copy(io.Discard, resp.Body) // nolint: errcheck
 	s.HealthCheck.Status = resp.StatusCode
 	s.HealthCheck.At = time.Now()
 	s.Count++
