@@ -1,11 +1,11 @@
-FROM node:14.5.0-alpine3.12 AS front_builder
+FROM node:14.5.0-alpine AS front_builder
 
 ADD ./front /front
 WORKDIR /front
 RUN npm install && ./node_modules/.bin/quasar build
 
 # Backend Build Step
-FROM golang:1.15.0-alpine3.12 AS builder
+FROM golang:1.20.0-alpine AS builder
 
 # Prerequisites
 RUN apk update && apk add --no-cache upx
@@ -27,7 +27,7 @@ RUN mv front/dist/spa/index.html front/dist/spa/main.html
 RUN statik -src=./front/dist/spa/ -f
 RUN mv front/dist/spa/main.html front/dist/spa/index.html
 RUN CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${version} -X main.Build=${build}" -o /tmp/vuemonit
-RUN upx --brute /tmp/vuemonit
+RUN upx --best /tmp/vuemonit
 
 # Final Step
 FROM gcr.io/distroless/static
