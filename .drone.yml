@@ -5,7 +5,7 @@ name: backend
 
 steps:
   - name: build
-    image: golang:latest
+    image: golang:1.20.0
     volumes:
       - name: deps
         path: /go
