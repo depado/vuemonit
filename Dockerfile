@@ -1,4 +1,4 @@
-FROM node:14.5.0-alpine AS front_builder
+FROM node:19.6.0-alpine AS front_builder
 
 ADD ./front /front
 WORKDIR /front
