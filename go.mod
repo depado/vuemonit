@@ -17,7 +17,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	go.etcd.io/bbolt v1.3.7
-	go.uber.org/fx v1.19.1
+	go.uber.org/fx v1.19.2
 	golang.org/x/crypto v0.6.0
 	google.golang.org/protobuf v1.28.1
 )
