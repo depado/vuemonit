@@ -8,7 +8,7 @@ require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/contrib v0.0.0-20221130124618-7e01895a63f2
 	github.com/gin-gonic/gin v1.9.0
-	github.com/go-co-op/gocron v1.18.0
+	github.com/go-co-op/gocron v1.18.1
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/xid v1.4.0
