@@ -5,7 +5,7 @@ WORKDIR /front
 RUN npm install && ./node_modules/.bin/quasar build
 
 # Backend Build Step
-FROM golang:1.20.1-alpine AS builder
+FROM golang:1.20.2-alpine AS builder
 
 # Prerequisites
 RUN apk update && apk add --no-cache upx
