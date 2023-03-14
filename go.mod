@@ -19,7 +19,7 @@ require (
 	go.etcd.io/bbolt v1.3.7
 	go.uber.org/fx v1.19.2
 	golang.org/x/crypto v0.7.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.29.1
 )
 
 require (
