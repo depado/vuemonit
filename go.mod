@@ -18,7 +18,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	go.etcd.io/bbolt v1.3.7
 	go.uber.org/fx v1.19.2
-	golang.org/x/crypto v0.14.0
+	golang.org/x/crypto v0.17.0
 	google.golang.org/protobuf v1.30.0
 )
 
@@ -72,8 +72,8 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
