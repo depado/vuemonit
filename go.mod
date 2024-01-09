@@ -13,7 +13,7 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/xid v1.4.0
 	github.com/rs/zerolog v1.29.0
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	go.etcd.io/bbolt v1.3.7
